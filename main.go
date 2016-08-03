@@ -40,8 +40,8 @@ func TokyoHandler(w http.ResponseWriter, r *http.Request) {
 func GodzirrasHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
-	rows, err := DB.Query("INSERT INTO godzillas(name, height) VALUES ('" + r.FormValue("name") + "', '" + r.FormValue("height") + "')")
-	fmt.Println(rows)
-	fmt.Println(err)
+	DB.Query("INSERT INTO godzillas(name, height) VALUES ('" + r.FormValue("name") + "', '" + r.FormValue("height") + "')")
+	//fmt.Println(rows)
+	//fmt.Println(err)
 	// http.ServeFile(w, r, "templates/godzirras.html")
 }

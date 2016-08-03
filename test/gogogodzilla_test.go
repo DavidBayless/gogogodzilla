@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 
 	_ "github.com/lib/pq"
 
@@ -81,13 +82,6 @@ var _ = Describe("Gogogodzilla", func() {
 			Expect(page.FindByID("newGodzillaHeight").Fill("25m^3")).To(Succeed())
 		})
 	})
-	It("Should allow a user to go to /godzillas", func() {
-		By("clicking on 'New Godzillas'", func() {
-			Expect(page.Navigate("http://localhost:9001")).To(Succeed())
-			Expect(page.FindByID("submit").Click()).To(Succeed())
-			Expect(page).To(HaveURL("http://localhost:9001/godzirras"))
-		})
-	})
 	It("Should populate the database", func() {
 		By("filling the form, and clicking the submit button", func() {
 			Expect(page.Navigate("http://localhost:9001")).To(Succeed())
@@ -101,6 +95,8 @@ var _ = Describe("Gogogodzilla", func() {
 			}
 			var nameExpect string
 			var heightExpect string
+			var idInsert int
+
 			defer rows.Close()
 			for rows.Next() {
 				var id int
@@ -111,9 +107,14 @@ var _ = Describe("Gogogodzilla", func() {
 				}
 				nameExpect = name
 				heightExpect = height
+				idInsert = id
 			}
 			Expect(nameExpect).To(Equal("Hydra"))
 			Expect(heightExpect).To(Equal("3ft"))
+
+			rowz, errz := DB.Query("DELETE FROM godzillas WHERE id=" + strconv.Itoa(idInsert))
+			fmt.Println(errz)
+			fmt.Println(rowz)
 		})
 	})
 
