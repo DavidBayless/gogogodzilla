@@ -48,11 +48,11 @@ var _ = Describe("Gogogodzilla", func() {
 
 		page, err = agoutiDriver.NewPage()
 		Expect(err).NotTo(HaveOccurred())
-		DB.Query("INSERT INTO godzillas(name, height) VALUES ('Gojira', '5ft')")
 	})
 
 	AfterEach(func() {
-		DB.Query("DELETE FROM godzillas")
+		// DB.Query("DELETE FROM godzillas")
+		DB.Close()
 		Expect(page.Destroy()).To(Succeed())
 	})
 
@@ -88,12 +88,19 @@ var _ = Describe("Gogogodzilla", func() {
 			Expect(page).To(HaveURL("http://localhost:9001/godzirras"))
 		})
 	})
-	It("Should populate the databse", func() {
-		By("fillling the form, and clicking the submit button", func() {
-			rows, err := DB.Query("SELECT * FROM godzillas")
+	It("Should populate the database", func() {
+		By("filling the form, and clicking the submit button", func() {
+			Expect(page.Navigate("http://localhost:9001")).To(Succeed())
+			Expect(page.FindByID("newGodzilla").Fill("Hydra")).To(Succeed())
+			Expect(page.FindByID("newGodzillaHeight").Fill("3ft")).To(Succeed())
+			Expect(page.FindByID("submit").Click()).To(Succeed())
+			Expect(page).To(HaveURL("http://localhost:9001/godzirras"))
+			rows, err := DB.Query("Select * from godzillas where name='Hydra'")
 			if err != nil {
 				log.Fatal(err)
 			}
+			var nameExpect string
+			var heightExpect string
 			defer rows.Close()
 			for rows.Next() {
 				var id int
@@ -102,8 +109,11 @@ var _ = Describe("Gogogodzilla", func() {
 				if err := rows.Scan(&id, &name, &height); err != nil {
 					fmt.Println(err)
 				}
-				fmt.Printf("Name: %s, Height: %s", name, height)
+				nameExpect = name
+				heightExpect = height
 			}
+			Expect(nameExpect).To(Equal("Hydra"))
+			Expect(heightExpect).To(Equal("3ft"))
 		})
 	})
 
