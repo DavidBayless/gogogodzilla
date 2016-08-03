@@ -4,22 +4,55 @@ import (
 	// . "gogogodzilla/"
 	// . "gogogodzilla/test"
 
+	"database/sql"
+	"fmt"
+	"log"
+
+	_ "github.com/lib/pq"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/sclevine/agouti"
 	. "github.com/sclevine/agouti/matchers"
 )
 
+var DB *sql.DB
+
+// var _ = BeforeSuite(func() {
+// 	connstring := fmt.Sprintf("user=%s dbname=%s sslmode=disable", "localadmin", "godzirras")
+// 	var err error
+// 	DB, err = sql.Open("postgres", connstring)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	err = DB.Ping()
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
+// })
+
 var _ = Describe("Gogogodzilla", func() {
 	var page *agouti.Page
 
 	BeforeEach(func() {
+		connstring := fmt.Sprintf("user=%s dbname=%s sslmode=disable", "localadmin", "godzirras")
 		var err error
+		DB, err = sql.Open("postgres", connstring)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = DB.Ping()
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		page, err = agoutiDriver.NewPage()
 		Expect(err).NotTo(HaveOccurred())
+		DB.Query("INSERT INTO godzillas(name, height) VALUES ('Gojira', '5ft')")
 	})
 
 	AfterEach(func() {
+		DB.Query("DELETE FROM godzillas")
 		Expect(page.Destroy()).To(Succeed())
 	})
 
@@ -55,6 +88,23 @@ var _ = Describe("Gogogodzilla", func() {
 			Expect(page).To(HaveURL("http://localhost:9001/godzirras"))
 		})
 	})
-	It("Should ")
+	It("Should populate the databse", func() {
+		By("fillling the form, and clicking the submit button", func() {
+			rows, err := DB.Query("SELECT * FROM godzillas")
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var id int
+				var name string
+				var height string
+				if err := rows.Scan(&id, &name, &height); err != nil {
+					fmt.Println(err)
+				}
+				fmt.Printf("Name: %s, Height: %s", name, height)
+			}
+		})
+	})
 
 })
