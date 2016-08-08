@@ -1,0 +1,9 @@
+#dankMeme {
+  height: 500px;
+  width: 750px;
+}
+
+#dankMeme img {
+  height: inherit;
+  width: 100%;
+}

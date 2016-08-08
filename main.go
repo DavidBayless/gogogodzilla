@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"math/rand"
 	"time"
-
+	"strconv"
 	_ "github.com/lib/pq"
 
 	"github.com/gorilla/mux"
@@ -32,12 +32,14 @@ func main() {
 		fmt.Println(err)
 	}
 
-
 	r := mux.NewRouter()
 	r.HandleFunc("/", TokyoHandler).
 		Methods("GET")
 	r.HandleFunc("/godzirras", GodzirrasHandler).
 		Methods("POST")
+	// r.Handle("/css/", http.FileServer(http.Dir("/templates/css/styles.css")))
+	r.HandleFunc("/css", css).
+		Methods("GET")
 	log.Fatal(http.ListenAndServe(":9001", r))
 }
 
@@ -53,6 +55,10 @@ func GodzirrasHandler(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println(rows)
 	//fmt.Println(err)
 	// http.ServeFile(w, r, "templates/godzirras.html")
+}
+
+func css(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "templates/css/styles.css")
 }
 
 func ErrorChecker() string {
@@ -87,6 +93,9 @@ func ErrorChecker() string {
 func render(w http.ResponseWriter, filename string, data interface{}) {
 	funcMap := template.FuncMap{
 		"ErrorChecker": ErrorChecker,
+		"rando" : rando,
+		"sayMuch" : sayMuch,
+		"epic" : epicImages,
 	}
 
 	tmpl, err := template.New("tokyo.html").Funcs(funcMap).ParseFiles(filename)
@@ -98,4 +107,27 @@ func render(w http.ResponseWriter, filename string, data interface{}) {
 		// http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Fatal("MOAR STUFF: ", err)
 	}
+}
+
+func rando() int {
+	now := time.Now()
+	nanos := int64(now.Nanosecond())
+	rand.Seed(nanos)
+	return rand.Intn(10)
+}
+
+func sayMuch(repeat int) string{
+	return "I say a lot " + strconv.Itoa(repeat) + " times"
+}
+
+func epicImages() string {
+	now := time.Now()
+	nanos := int64(now.Nanosecond()) // Try changing this number!
+	rand.Seed(nanos)
+	images := []string{
+		"http://i0.kym-cdn.com/photos/images/original/000/452/840/d73.jpg",
+		"http://orig05.deviantart.net/7153/f/2011/053/1/7/teddy_roosevelt_vs__bigfoot_by_sharpwriter-d3a72w4.jpg",
+		"http://36.media.tumblr.com/ccbebafa27c043438adb15cbc0615bac/tumblr_nqy4t2Ln0i1qfaphzo1_1280.jpg",
+	}
+	return images[rand.Intn(len(images))]
 }
