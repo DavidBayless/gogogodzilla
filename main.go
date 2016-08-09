@@ -3,13 +3,13 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"html/template"
 	"log"
-	"net/http"
 	"math/rand"
-	"time"
+	"net/http"
 	"strconv"
-	_ "github.com/lib/pq"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -18,8 +18,13 @@ var DB *sql.DB
 
 type Stuff struct {
 	Blue string
+	Errors NameErr
 }
 
+type NameErr struct {
+	TooShort string
+	TooLong string
+}
 func main() {
 	connstring := fmt.Sprintf("user=%s dbname=%s sslmode=disable", "localadmin", "godzirras")
 	var err error
@@ -37,24 +42,29 @@ func main() {
 		Methods("GET")
 	r.HandleFunc("/godzirras", GodzirrasHandler).
 		Methods("POST")
-	// r.Handle("/css/", http.FileServer(http.Dir("/templates/css/styles.css")))
 	r.HandleFunc("/css", css).
 		Methods("GET")
 	log.Fatal(http.ListenAndServe(":9001", r))
 }
 
 func TokyoHandler(w http.ResponseWriter, r *http.Request) {
-	// http.ServeFile(w, r, "templates/tokyo.html")
 	render(w, "templates/tokyo.html", Stuff{Blue: "True"})
 }
 
 func GodzirrasHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
-	DB.Query("INSERT INTO godzillas(name, height) VALUES ('" + r.FormValue("name") + "', '" + r.FormValue("height") + "')")
-	//fmt.Println(rows)
-	//fmt.Println(err)
-	// http.ServeFile(w, r, "templates/godzirras.html")
+	name := r.FormValue("name")
+	height := r.FormValue("height")
+	isValid, errList := nameValidator(name)
+	fmt.Println(isValid)
+	fmt.Println(errList)
+
+	if (isValid == true) {
+		DB.Query("INSERT INTO godzillas(name, height) VALUES ('" + name + "', '" + height + "')")
+	} else {
+		render(w, "templates/tokyo.html", Stuff{Blue: "True", Errors: errList})
+	}
 }
 
 func css(w http.ResponseWriter, r *http.Request) {
@@ -87,15 +97,15 @@ func ErrorChecker() string {
 		"Outlook not so good",
 		"Very doubtful",
 	}
-	return "Magic 8-Ball says: "+ answers[rand.Intn(len(answers))]
+	return "Magic 8-Ball says: " + answers[rand.Intn(len(answers))]
 }
 
 func render(w http.ResponseWriter, filename string, data interface{}) {
 	funcMap := template.FuncMap{
 		"ErrorChecker": ErrorChecker,
-		"rando" : rando,
-		"sayMuch" : sayMuch,
-		"epic" : epicImages,
+		"rando":        rando,
+		"sayMuch":      sayMuch,
+		"epic":         epicImages,
 	}
 
 	tmpl, err := template.New("tokyo.html").Funcs(funcMap).ParseFiles(filename)
@@ -104,7 +114,6 @@ func render(w http.ResponseWriter, filename string, data interface{}) {
 	}
 	err = tmpl.Execute(w, data)
 	if err != nil {
-		// http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Fatal("MOAR STUFF: ", err)
 	}
 }
@@ -116,7 +125,7 @@ func rando() int {
 	return rand.Intn(10)
 }
 
-func sayMuch(repeat int) string{
+func sayMuch(repeat int) string {
 	return "I say a lot " + strconv.Itoa(repeat) + " times"
 }
 
@@ -130,4 +139,19 @@ func epicImages() string {
 		"http://36.media.tumblr.com/ccbebafa27c043438adb15cbc0615bac/tumblr_nqy4t2Ln0i1qfaphzo1_1280.jpg",
 	}
 	return images[rand.Intn(len(images))]
+}
+
+func nameValidator(name string) (bool, NameErr) {
+	errorList := NameErr{TooLong: "", TooShort: ""}
+	isValid := true
+	if len(name) < 3 {
+		isValid = false
+		errorList.TooShort = "Your name is too short!"
+	}
+
+	if len(name) > 20 {
+		isValid = false
+		errorList.TooLong = "Your name is too Long!"
+	}
+	return isValid, errorList
 }
