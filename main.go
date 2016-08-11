@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"html/template"
 	"log"
 	"math/rand"
@@ -11,20 +10,24 @@ import (
 	"strconv"
 	"time"
 
+	_ "github.com/lib/pq"
+	"github.com/mavricknz/ldap"
+
 	"github.com/gorilla/mux"
 )
 
 var DB *sql.DB
 
 type Stuff struct {
-	Blue string
+	Blue   string
 	Errors NameErr
 }
 
 type NameErr struct {
 	TooShort string
-	TooLong string
+	TooLong  string
 }
+
 func main() {
 	connstring := fmt.Sprintf("user=%s dbname=%s sslmode=disable", "localadmin", "godzirras")
 	var err error
@@ -60,7 +63,7 @@ func GodzirrasHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(isValid)
 	fmt.Println(errList)
 
-	if (isValid == true) {
+	if isValid == true {
 		DB.Query("INSERT INTO godzillas(name, height) VALUES ('" + name + "', '" + height + "')")
 	} else {
 		render(w, "templates/tokyo.html", Stuff{Blue: "True", Errors: errList})
@@ -154,4 +157,18 @@ func nameValidator(name string) (bool, NameErr) {
 		errorList.TooLong = "Your name is too Long!"
 	}
 	return isValid, errorList
+}
+
+//LDAP FUNC EXAMPLE ----
+func auth(username string, password string) {
+	//server string is where you put the server string without the 'LDAP://'
+	//000 is where your port goes
+	connection := ldap.NewLDAPConnection("server string", uint16(000))
+	err := connection.Connect()
+	fmt.Println("errrrrrrrr: ", err)
+	defer connection.Close()
+	err = connection.Bind(username, password)
+	if err != nil {
+		fmt.Println("You suck, ", err)
+	}
 }
