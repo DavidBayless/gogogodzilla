@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -51,6 +52,7 @@ func main() {
 }
 
 func TokyoHandler(w http.ResponseWriter, r *http.Request) {
+	getEnvironment()
 	render(w, "templates/tokyo.html", Stuff{Blue: "True"})
 }
 
@@ -171,4 +173,21 @@ func auth(username string, password string) {
 	if err != nil {
 		fmt.Println("You suck, ", err)
 	}
+}
+
+func getEnvironment() {
+	// first := os.Environ()
+	// for key, val := range first {
+	// 	if val == "josh=bad hair" {
+	// 		fmt.Println(key)
+	// 	}
+	// }
+
+	first := os.Getenv("josh")
+	second := os.Getenv("foo")
+	third := os.Getenv("stinnette")
+
+	fmt.Println("Josh = ", first)
+	fmt.Println("foo = ", second)
+	fmt.Println("stinnette = ", third)
 }
