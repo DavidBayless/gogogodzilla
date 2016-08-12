@@ -1,4 +1,4 @@
 development:
-    dialect: postgres
-    datasource: database=godzirras sslmode=disable
+    dialect: mssql
+    datasource: database=$DATABASE;server=$SERVER;user id=$USERID;password=$PASSWORD;
     dir: migrations/

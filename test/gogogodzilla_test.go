@@ -76,6 +76,14 @@ var _ = Describe("Gogogodzilla", func() {
 			Expect(page.FindByID("newGodzilla").Fill("Hello World")).To(Succeed())
 		})
 	})
+	It("should prevent user from entering new Godzilla containing illegal characters", func() {
+		By("visiting '/'", func() {
+			Expect(page.Navigate("http://localhost:9001")).To(Succeed())
+			Expect(page.FindByID("newGodzilla").Fill("Godzill@")).To(Succeed())
+			Expect(page.FindByID("submit").Click()).To(Succeed())
+			Expect(page).To(HaveURL("http://localhost:9001/"))
+		})
+	})
 	It("Should allow user to enter ew Godzilla height in input field", func() {
 		By("visiting '/'", func() {
 			Expect(page.Navigate("http://localhost:9001")).To(Succeed())
