@@ -3,22 +3,25 @@
   <head>
     <meta charset="utf-8">
     <title></title>
+    <link rel="stylesheet" type="text/css" href="/css">
   </head>
   <body>
     <h1 id="godzirra">GODZIRRA</h1>
     <div id="dankMeme">
-      <img src="http://i0.kym-cdn.com/photos/images/original/000/452/840/d73.jpg"/>
+      <img src={{epic}}>
     </div>
     <form method="POST" action="/godzirras">
       <label name="New Godzilla"
       for="New Godzilla">New Godzilla</label>
       <input type="text" name="name" value="" id="newGodzilla">
-      <!-- {{.Validator}} -->
       <input type="text" name="height" id="newGodzillaHeight" value="">
       <input type="submit" id="submit">
     </form>
     <p>
       {{.Blah}}
     </p>
+    {{.Errors}}
+    {{ErrorChecker}}
+    {{sayMuch rando}}
   </body>
 </html>
