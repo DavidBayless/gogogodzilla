@@ -19,52 +19,63 @@ import (
 
 var DB *sql.DB
 
+// sample struct for passing information to the html templates
 type Stuff struct {
 	Blue   string
 	Errors NameErr
 }
 
+// struct that contains all the errors for validations
 type NameErr struct {
 	TooShort string
 	TooLong  string
 }
 
 func main() {
+	// establishing database connection
 	connstring := fmt.Sprintf("user=%s dbname=%s sslmode=disable", "localadmin", "godzirras")
 	var err error
 	DB, err = sql.Open("postgres", connstring)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// assures the database is working
 	err = DB.Ping()
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	// establishing new router w/routes and handlers
 	r := mux.NewRouter()
 	r.HandleFunc("/", TokyoHandler).
 		Methods("GET")
 	r.HandleFunc("/godzirras", GodzirrasHandler).
 		Methods("POST")
+	// handle css links in html
 	r.HandleFunc("/css", css).
 		Methods("GET")
 	log.Fatal(http.ListenAndServe(":9001", r))
 }
 
+// Handler function for the home page
 func TokyoHandler(w http.ResponseWriter, r *http.Request) {
 	getEnvironment()
 	render(w, "templates/tokyo.html", Stuff{Blue: "True"})
 }
 
+// Handler for the page that loads after submitting
 func GodzirrasHandler(w http.ResponseWriter, r *http.Request) {
-
+	// parse the form values
 	r.ParseForm()
 	name := r.FormValue("name")
 	height := r.FormValue("height")
+
+	// check if the inputs are valid
 	isValid, errList := nameValidator(name)
 	fmt.Println(isValid)
 	fmt.Println(errList)
 
+	// if the inputs are valid insert into the database, otherwise re render the same page with the errors
 	if isValid == true {
 		DB.Query("INSERT INTO godzillas(name, height) VALUES ('" + name + "', '" + height + "')")
 	} else {
@@ -72,14 +83,18 @@ func GodzirrasHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// serving css pages
 func css(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "templates/css/styles.css")
 }
 
 func ErrorChecker() string {
+	// using golang time package to create a dynamic seed for randomness
 	now := time.Now()
-	nanos := int64(now.Nanosecond()) // Try changing this number!
+	nanos := int64(now.Nanosecond())
 	rand.Seed(nanos)
+
+	// bunch of different vague responses we will be pulling from
 	answers := []string{
 		"It is certain",
 		"It is decidedly so",
@@ -102,10 +117,12 @@ func ErrorChecker() string {
 		"Outlook not so good",
 		"Very doubtful",
 	}
+	// use the random integer function to pull a random index from answers.
 	return "Magic 8-Ball says: " + answers[rand.Intn(len(answers))]
 }
 
 func render(w http.ResponseWriter, filename string, data interface{}) {
+	// creating a funcMap that we can use to add custom functions to the template
 	funcMap := template.FuncMap{
 		"ErrorChecker": ErrorChecker,
 		"rando":        rando,
@@ -113,16 +130,19 @@ func render(w http.ResponseWriter, filename string, data interface{}) {
 		"epic":         epicImages,
 	}
 
+	// creating a new template and including the functions that we added to the func map
 	tmpl, err := template.New("tokyo.html").Funcs(funcMap).ParseFiles(filename)
 	if err != nil {
 		log.Fatal("STuff and such:", err)
 	}
+	// render the template
 	err = tmpl.Execute(w, data)
 	if err != nil {
 		log.Fatal("MOAR STUFF: ", err)
 	}
 }
 
+// random number generator
 func rando() int {
 	now := time.Now()
 	nanos := int64(now.Nanosecond())
@@ -130,10 +150,12 @@ func rando() int {
 	return rand.Intn(10)
 }
 
+// returns a string
 func sayMuch(repeat int) string {
 	return "I say a lot " + strconv.Itoa(repeat) + " times"
 }
 
+// randomly assigns an image url
 func epicImages() string {
 	now := time.Now()
 	nanos := int64(now.Nanosecond()) // Try changing this number!
@@ -146,6 +168,7 @@ func epicImages() string {
 	return images[rand.Intn(len(images))]
 }
 
+//
 func nameValidator(name string) (bool, NameErr) {
 	errorList := NameErr{TooLong: "", TooShort: ""}
 	isValid := true
