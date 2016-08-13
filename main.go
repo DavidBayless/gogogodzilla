@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/lib/pq"
 	"github.com/mavricknz/ldap"
 
@@ -21,6 +22,7 @@ var DB *sql.DB
 
 // sample struct for passing information to the html templates
 type Stuff struct {
+	Blah   string
 	Blue   string
 	Errors NameErr
 }
@@ -32,20 +34,25 @@ type NameErr struct {
 }
 
 func main() {
-	// establishing database connection
-	connstring := fmt.Sprintf("user=%s dbname=%s sslmode=disable", "localadmin", "godzirras")
+	server := os.Getenv("SERVER")
+	database := os.Getenv("DATABASE")
+	password := os.Getenv("PASSWORD")
+	userID := os.Getenv("USERID")
+
+	connstring := fmt.Sprintf("server=%s;database=%s;password=%s;user id=%s;", server, database, password, userID)
 	var err error
-	DB, err = sql.Open("postgres", connstring)
+	DB, err = sql.Open("mssql", connstring)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("err", err)
 	}
 	// assures the database is working
 	err = DB.Ping()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Ping: ", err)
 	}
 
 	// establishing new router w/routes and handlers
+	fmt.Println(DB)
 	r := mux.NewRouter()
 	r.HandleFunc("/", TokyoHandler).
 		Methods("GET")
@@ -213,4 +220,8 @@ func getEnvironment() {
 	fmt.Println("Josh = ", first)
 	fmt.Println("foo = ", second)
 	fmt.Println("stinnette = ", third)
+}
+
+func Validator() string {
+	return "ERR DOOD"
 }
